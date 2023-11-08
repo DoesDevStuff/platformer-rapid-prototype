@@ -4,16 +4,17 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public float MOVE_ACCEL = (0.12f * 60.0f);
-    public float GROUND_FRICTION = 0.85f;
+    public float MOVE_ACCEL = (0.11f * 60.0f);
+    public float GROUND_FRICTION = 0.88f;
 
     // 1. changed to take gravity as a positive value
-    public float GRAVITY = (0.05f * 60.0f);
-    public float JUMP_VEL = 0.75f;
+    public float GRAVITY = (0.08f * 60.0f); // Increased gravity value
+    public float FALL_GRAVITY_MULTIPLIER = 1.6f;
+    public float JUMP_VEL = 0.9f;
     public float JUMP_MIN_TIME = 0.06f;
-    public float JUMP_MAX_TIME = 0.20f;
-    public float AIR_FALL_FRICTION = 0.975f;
-    public float AIR_MOVE_FRICTION = 0.85f;
+    public float JUMP_MAX_TIME = 0.20f; // value will determine how long the coyote time window lasts. Shorter time = challenging, longer time = more forgiving.
+    public float AIR_FALL_FRICTION = 0.98f;
+    public float AIR_MOVE_FRICTION = 0.82f;
 
     private Rigidbody2D m_rigidBody = null;
     private bool m_jumpPressed = false;
@@ -21,6 +22,7 @@ public class Player : MonoBehaviour
     private bool m_wantsRight = false;
     private bool m_wantsLeft = false;
     private float m_stateTimer = 0.0f;
+    private float m_coyoteTimer = 0.0f; // Coyote time - Giving the player a small margin of error for timing their jumps when running off of a ledge.
     private Vector2 m_vel = new Vector2(0, 0);
     private List<GameObject> m_groundObjects = new List<GameObject>();
 
@@ -72,7 +74,8 @@ public class Player : MonoBehaviour
         //Check to see whether to go into movement of some sort
         if (m_groundObjects.Count == 0)
         {
-            //No longer on the ground, fall.
+            //No longer on the ground, fall. Start coyote time
+            m_coyoteTimer = JUMP_MAX_TIME;
             m_state = PlayerState.PS_FALLING;
             return;
         }
@@ -91,12 +94,25 @@ public class Player : MonoBehaviour
             m_state = PlayerState.PS_WALKING;
             return;
         }
+
+        // Reset coyote timer when on the ground
+        m_coyoteTimer = 0.0f;
     }
 
     void Falling()
     {
+        m_coyoteTimer -= Time.fixedDeltaTime;
+
+        if( (m_jumpHeld || m_jumpPressed) && m_coyoteTimer > 0)
+        {
+            m_stateTimer = 0;
+            m_state = PlayerState.PS_JUMPING;
+            Debug.Log("Coyote time jump triggered!");
+            return;
+        }
+
         // since gravity is now positive we must subtract
-        m_vel.y -= GRAVITY * Time.fixedDeltaTime;
+        m_vel.y -= (GRAVITY * FALL_GRAVITY_MULTIPLIER) * Time.fixedDeltaTime;
         m_vel.y *= AIR_FALL_FRICTION;
         if (m_wantsLeft)
         {
