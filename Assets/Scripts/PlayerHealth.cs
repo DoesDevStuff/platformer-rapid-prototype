@@ -9,7 +9,7 @@ public class PlayerHealth : MonoBehaviour
     public float CURRENT_HEALTH;
     public GameObject[] BLOOD_PREFABS;  // Array of blood splatter prefabs
     public GameObject DEATHPARTICLE_PREFAB;
-
+    
     [SerializeField] private SO_ScreenShakeProfile m_playerShakeProfile; // expose in inspector
     private GameManager m_gameManager;
     private CinemachineImpulseSource m_impulseSource;
@@ -27,9 +27,9 @@ public class PlayerHealth : MonoBehaviour
         // Camera shake stuff 
         //CameraShake_Manager.CAMERA_INSTANCE.CameraShake(m_impulseSource); // 1st way using default settings and no SO
         CameraShake_Manager.CAMERA_INSTANCE.ScreenShakeFromProfile(m_playerShakeProfile, m_impulseSource);
-
+        
         CURRENT_HEALTH -= damageAmount;
-
+        
         // Check if the player is dead
         if (CURRENT_HEALTH <= 0)
         {

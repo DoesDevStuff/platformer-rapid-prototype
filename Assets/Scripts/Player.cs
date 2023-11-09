@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Player : MonoBehaviour
+public class Player : MonoBehaviour, IKnockBack
 {
     public float MOVE_ACCEL = (0.11f * 60.0f);
     public float GROUND_FRICTION = 0.88f;
@@ -225,6 +225,12 @@ public class Player : MonoBehaviour
             m_state = PlayerState.PS_JUMPING;
             return;
         }
+    }
+
+    public void Knockback(Vector2 direction, float force)
+    {
+        m_vel = direction.normalized * force;
+        m_state = PlayerState.PS_FALLING; // Change to the appropriate state
     }
 
     void ApplyVelocity()

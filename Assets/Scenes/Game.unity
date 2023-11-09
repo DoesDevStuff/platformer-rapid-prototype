@@ -651,9 +651,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ff25625a312a0f4ebd2da300351ca5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DAMAGE_AMOUNT: 1.5
-  DAMAGE_OVER_TIME: 0.2
+  DAMAGE_AMOUNT: 3
   PLAYER: {fileID: 679829335}
+  KNOCKBACK_FORCE: 3.5
+  PLAYER_BODY_COMPONENTS:
+  - {fileID: 679829338}
+  HURT_COLOUR: {r: 0.43155333, g: 0.08130119, b: 0.5943396, a: 0}
 --- !u!331 &605284060
 SpriteMask:
   m_ObjectHideFlags: 0
