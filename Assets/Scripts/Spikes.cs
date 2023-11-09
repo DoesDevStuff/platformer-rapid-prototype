@@ -5,6 +5,7 @@ using UnityEngine;
 public class Spikes : MonoBehaviour
 {
     public float DAMAGE_AMOUNT = 1.5f;
+    public float DAMAGE_OVER_TIME = 0.05f;
     public GameObject PLAYER;
 
     private SpriteRenderer m_sprite = null;
@@ -26,7 +27,7 @@ public class Spikes : MonoBehaviour
             PlayerHealth playerHealth = PLAYER.GetComponent<PlayerHealth>();
             if (playerHealth != null)
             {
-                playerHealth.TakeDamage(DAMAGE_AMOUNT * Time.fixedDeltaTime); // Deal damage continuously
+                playerHealth.TakeDamage(DAMAGE_AMOUNT * DAMAGE_OVER_TIME); // Deal damage continuously
             }
         }
     }
