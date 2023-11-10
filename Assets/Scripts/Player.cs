@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -38,7 +39,7 @@ public class Player : MonoBehaviour, IKnockBack
     };
 
     private PlayerState m_state = PlayerState.PS_IDLE;
-
+    
     // Use this for initialization
     void Start ()
     {
@@ -231,6 +232,21 @@ public class Player : MonoBehaviour, IKnockBack
     {
         m_vel = direction.normalized * force;
         m_state = PlayerState.PS_FALLING; // Change to the appropriate state
+    }
+
+    public void BounceUp(float bounceForce)
+    {
+        if (m_state == PlayerState.PS_FALLING && m_vel.y < 0)
+        {
+            // If the player is falling, reduce the bounce force to simulate the effect of gravity
+            float gravityEffect = (GRAVITY * FALL_GRAVITY_MULTIPLIER) * Time.fixedDeltaTime;
+            Debug.Log("Gravity effect on bounce: " + gravityEffect);
+            bounceForce -= gravityEffect;
+        }
+
+        m_vel.y = bounceForce;
+        m_state = PlayerState.PS_JUMPING;
+        Debug.Log("Bounce force: " + bounceForce);
     }
 
     void ApplyVelocity()
