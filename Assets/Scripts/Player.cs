@@ -28,6 +28,7 @@ public class Player : MonoBehaviour, IKnockBack
     private float m_maxIdleSpeed = 1.25f;
     private float m_maxTilt = 10.0f;
     private float m_tiltSpeed = 20.0f;
+    private RipplePostProcessor m_screenRipple;
     private Quaternion m_originalRotation;
     private Rigidbody2D m_rigidBody = null;
     private Vector2 m_vel = new Vector2(0, 0);
@@ -55,6 +56,7 @@ public class Player : MonoBehaviour, IKnockBack
         m_rigidBody = transform.GetComponent<Rigidbody2D>();
         m_animator = GetComponent<Animator>();
         m_originalRotation = m_rigidBody.transform.rotation;
+        m_screenRipple = Camera.main.GetComponent<RipplePostProcessor>();
     }
 
     void Update()
@@ -296,7 +298,7 @@ public class Player : MonoBehaviour, IKnockBack
             Debug.Log("Gravity effect on bounce: " + gravityEffect);
             bounceForce -= gravityEffect;
         }
-
+        m_screenRipple.RippleEffect();
         m_vel.y = bounceForce;
         m_state = PlayerState.PS_JUMPING;
         PlayParticles(m_bounceParticles);
