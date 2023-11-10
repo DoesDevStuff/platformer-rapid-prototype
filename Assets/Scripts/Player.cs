@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,9 +7,7 @@ public class Player : MonoBehaviour, IKnockBack
 {
     public float MOVE_ACCEL = (0.11f * 60.0f);
     public float GROUND_FRICTION = 0.88f;
-
-    // 1. changed to take gravity as a positive value
-    public float GRAVITY = (0.08f * 60.0f); // Increased gravity value
+    public float GRAVITY = (0.08f * 60.0f); // Increased gravity value; changed to take gravity as a positive value as well
     public float FALL_GRAVITY_MULTIPLIER = 1.6f;
     public float JUMP_VEL = 0.9f;
     public float JUMP_MIN_TIME = 0.06f;
@@ -16,7 +15,7 @@ public class Player : MonoBehaviour, IKnockBack
     public float AIR_FALL_FRICTION = 0.98f;
     public float AIR_MOVE_FRICTION = 0.82f;
 
-    private Rigidbody2D m_rigidBody = null;
+    private bool m_facingRight = true;
     private bool m_jumpPressed = false;
     private bool m_jumpHeld = false;
     private bool m_wantsRight = false;
@@ -26,9 +25,21 @@ public class Player : MonoBehaviour, IKnockBack
     private float m_coyoteTime = 0.2f;
     private float m_jumpBufferTimer = 0.0f;
     private float m_jumpBufferTime = 0.1f;
+    private float m_maxIdleSpeed = 1.25f;
+    private float m_maxTilt = 10.0f;
+    private float m_tiltSpeed = 20.0f;
+    private RipplePostProcessor m_screenRipple;
+    private Quaternion m_originalRotation;
+    private Rigidbody2D m_rigidBody = null;
     private Vector2 m_vel = new Vector2(0, 0);
     private List<GameObject> m_groundObjects = new List<GameObject>();
-
+    private Animator m_animator;
+    private static readonly int AnimParamJump = Animator.StringToHash("Jump");
+    private static readonly int AnimParamGrounded = Animator.StringToHash("Grounded");
+    private static readonly int AnimParamIdleSpeed = Animator.StringToHash("IdleSpeed");
+    
+    [SerializeField] private ParticleSystem m_bounceParticles;
+    
     private enum PlayerState
     {
         PS_IDLE = 0,
@@ -38,11 +49,14 @@ public class Player : MonoBehaviour, IKnockBack
     };
 
     private PlayerState m_state = PlayerState.PS_IDLE;
-
+    
     // Use this for initialization
     void Start ()
     {
         m_rigidBody = transform.GetComponent<Rigidbody2D>();
+        m_animator = GetComponent<Animator>();
+        m_originalRotation = m_rigidBody.transform.rotation;
+        m_screenRipple = Camera.main.GetComponent<RipplePostProcessor>();
     }
 
     void Update()
@@ -121,6 +135,11 @@ public class Player : MonoBehaviour, IKnockBack
         {
             m_jumpBufferTimer = m_jumpBufferTime;
         }
+
+        // Set Animator parameters
+        m_animator.SetBool(AnimParamJump, false);
+        m_animator.SetBool(AnimParamGrounded, m_groundObjects.Count > 0);
+        m_animator.SetFloat(AnimParamIdleSpeed, Mathf.Lerp(1, m_maxIdleSpeed, MOVE_ACCEL));
     }
 
     void Falling()
@@ -156,6 +175,11 @@ public class Player : MonoBehaviour, IKnockBack
         }
 
         m_vel.x *= AIR_MOVE_FRICTION;
+        
+        // Set Animator parameters
+        m_animator.SetBool(AnimParamJump, false);
+        m_animator.SetBool(AnimParamGrounded, m_groundObjects.Count > 0);
+        m_animator.SetFloat(AnimParamIdleSpeed, Mathf.Lerp(1, m_maxIdleSpeed, MOVE_ACCEL));
 
         ApplyVelocity();
     }
@@ -188,6 +212,11 @@ public class Player : MonoBehaviour, IKnockBack
 
         m_vel.x *= AIR_MOVE_FRICTION;
 
+        // Set Animator parameters
+        m_animator.SetBool(AnimParamJump, true);
+        m_animator.SetBool(AnimParamGrounded, m_groundObjects.Count > 0);
+        m_animator.SetFloat(AnimParamIdleSpeed, Mathf.Lerp(1, m_maxIdleSpeed, MOVE_ACCEL));
+        
         ApplyVelocity();
     }
 
@@ -209,7 +238,8 @@ public class Player : MonoBehaviour, IKnockBack
 
         m_vel.y = 0;
         m_vel.x *= GROUND_FRICTION;
-
+        HandleCharacterTilt();
+        
         ApplyVelocity();
 
         if (m_groundObjects.Count == 0)
@@ -223,14 +253,78 @@ public class Player : MonoBehaviour, IKnockBack
         {
             m_stateTimer = 0;
             m_state = PlayerState.PS_JUMPING;
+            // Reset tilt to original rotation when jumping
+            m_rigidBody.transform.rotation = m_originalRotation;
             return;
         }
+       
+        // Set Animator parameters
+        m_animator.SetBool(AnimParamJump, false);
+        m_animator.SetBool(AnimParamGrounded, m_groundObjects.Count > 0);
+        m_animator.SetFloat(AnimParamIdleSpeed, Mathf.Lerp(1, m_maxIdleSpeed, MOVE_ACCEL));
+     
     }
+
+
+    private void HandleCharacterTilt()
+    {
+        if (m_state == PlayerState.PS_IDLE)
+        {
+            // Reset to original rotation when idle
+            m_rigidBody.transform.rotation = Quaternion.Lerp(m_rigidBody.transform.rotation, m_originalRotation, m_tiltSpeed * Time.deltaTime);
+        }
+        else
+        {
+            // Tilt based on movement when walking
+            Quaternion runningTilt = m_groundObjects.Count > 0 ? Quaternion.Euler(0, 0, m_maxTilt * m_vel.x) : Quaternion.identity;
+            m_rigidBody.transform.up = Vector3.RotateTowards(m_rigidBody.transform.up, runningTilt * Vector2.up, m_tiltSpeed * Time.deltaTime, 0f);
+           
+        }
+    }
+
 
     public void Knockback(Vector2 direction, float force)
     {
         m_vel = direction.normalized * force;
         m_state = PlayerState.PS_FALLING; // Change to the appropriate state
+    }
+
+    public void BounceUp(float bounceForce)
+    {
+        if (m_state == PlayerState.PS_FALLING && m_vel.y < 0)
+        {
+            // If the player is falling, reduce the bounce force to simulate the effect of gravity
+            float gravityEffect = (GRAVITY * FALL_GRAVITY_MULTIPLIER) * Time.fixedDeltaTime;
+            Debug.Log("Gravity effect on bounce: " + gravityEffect);
+            bounceForce -= gravityEffect;
+        }
+        m_screenRipple.RippleEffect();
+        m_vel.y = bounceForce;
+        m_state = PlayerState.PS_JUMPING;
+        PlayParticles(m_bounceParticles);
+        Debug.Log("Bounce force: " + bounceForce);
+    }
+
+    void PlayParticles(ParticleSystem particles)
+    {
+        if (particles != null)
+        {
+            particles.Play();
+
+            // Get the local position of the particles relative to the player
+            Vector3 localPos = particles.transform.localPosition;
+
+            // Flip the local position if the player is facing left
+            if (!m_facingRight)
+            {
+                localPos.x *= -1;
+            }
+
+            // Update the position of the particles
+            particles.transform.localPosition = localPos;
+
+            StartCoroutine(StopParticlesAfterDuration(particles.main.duration, particles));
+        }
     }
 
     void ApplyVelocity()
@@ -314,5 +408,11 @@ public class Player : MonoBehaviour, IKnockBack
             }
         }
         m_rigidBody.transform.position = pos;
+    }
+
+    IEnumerator StopParticlesAfterDuration(float duration, ParticleSystem particles)
+    {
+        yield return new WaitForSeconds(duration);
+        particles.Stop();
     }
 }
