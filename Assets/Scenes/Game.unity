@@ -832,6 +832,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2afab45e585d75a4c85948747b87cb92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BOUNCE_FORCE: 2
 --- !u!1 &679829335
 GameObject:
   m_ObjectHideFlags: 0
@@ -848,6 +849,7 @@ GameObject:
   - component: {fileID: 679829341}
   - component: {fileID: 679829342}
   - component: {fileID: 679829343}
+  - component: {fileID: 679829344}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1116,6 +1118,26 @@ SpriteMask:
   m_BackSortingOrder: 0
   m_IsCustomRangeActive: 0
   m_SpriteSortPoint: 0
+--- !u!95 &679829344
+Animator:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 679829335}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 4b02656e43c5d3b469747cf29cb1574a, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
 --- !u!1 &920012147
 GameObject:
   m_ObjectHideFlags: 0

@@ -27,8 +27,14 @@ public class Player : MonoBehaviour, IKnockBack
     private float m_coyoteTime = 0.2f;
     private float m_jumpBufferTimer = 0.0f;
     private float m_jumpBufferTime = 0.1f;
+    private float m_maxIdleSpeed = 1.25f;
     private Vector2 m_vel = new Vector2(0, 0);
     private List<GameObject> m_groundObjects = new List<GameObject>();
+    private Animator m_animator;
+    private static readonly int AnimParamJump = Animator.StringToHash("Jump");
+    private static readonly int AnimParamGrounded = Animator.StringToHash("Grounded");
+    private static readonly int AnimParamIdleSpeed = Animator.StringToHash("IdleSpeed");
+
 
     private enum PlayerState
     {
@@ -44,6 +50,8 @@ public class Player : MonoBehaviour, IKnockBack
     void Start ()
     {
         m_rigidBody = transform.GetComponent<Rigidbody2D>();
+        m_animator = GetComponent<Animator>();
+
     }
 
     void Update()
@@ -122,6 +130,11 @@ public class Player : MonoBehaviour, IKnockBack
         {
             m_jumpBufferTimer = m_jumpBufferTime;
         }
+
+        // Set Animator parameters
+        m_animator.SetBool(AnimParamJump, false);
+        m_animator.SetBool(AnimParamGrounded, m_groundObjects.Count > 0);
+        m_animator.SetFloat(AnimParamIdleSpeed, Mathf.Lerp(1, m_maxIdleSpeed, MOVE_ACCEL));
     }
 
     void Falling()
@@ -158,6 +171,11 @@ public class Player : MonoBehaviour, IKnockBack
 
         m_vel.x *= AIR_MOVE_FRICTION;
 
+        // Set Animator parameters
+        m_animator.SetBool(AnimParamJump, false);
+        m_animator.SetBool(AnimParamGrounded, m_groundObjects.Count > 0);
+        m_animator.SetFloat(AnimParamIdleSpeed, Mathf.Lerp(1, m_maxIdleSpeed, MOVE_ACCEL));
+
         ApplyVelocity();
     }
 
@@ -188,6 +206,11 @@ public class Player : MonoBehaviour, IKnockBack
         }
 
         m_vel.x *= AIR_MOVE_FRICTION;
+
+        // Set Animator parameters
+        m_animator.SetBool(AnimParamJump, true);
+        m_animator.SetBool(AnimParamGrounded, m_groundObjects.Count > 0);
+        m_animator.SetFloat(AnimParamIdleSpeed, Mathf.Lerp(1, m_maxIdleSpeed, MOVE_ACCEL));
 
         ApplyVelocity();
     }
@@ -226,6 +249,11 @@ public class Player : MonoBehaviour, IKnockBack
             m_state = PlayerState.PS_JUMPING;
             return;
         }
+
+        // Set Animator parameters
+        m_animator.SetBool(AnimParamJump, false);
+        m_animator.SetBool(AnimParamGrounded, m_groundObjects.Count > 0);
+        m_animator.SetFloat(AnimParamIdleSpeed, Mathf.Lerp(1, m_maxIdleSpeed, MOVE_ACCEL));
     }
 
     public void Knockback(Vector2 direction, float force)
