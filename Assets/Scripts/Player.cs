@@ -17,6 +17,7 @@ public class Player : MonoBehaviour, IKnockBack
     public float AIR_FALL_FRICTION = 0.98f;
     public float AIR_MOVE_FRICTION = 0.82f;
 
+    private Quaternion m_originalRotation;
     private Rigidbody2D m_rigidBody = null;
     private bool m_jumpPressed = false;
     private bool m_jumpHeld = false;
@@ -28,6 +29,8 @@ public class Player : MonoBehaviour, IKnockBack
     private float m_jumpBufferTimer = 0.0f;
     private float m_jumpBufferTime = 0.1f;
     private float m_maxIdleSpeed = 1.25f;
+    [SerializeField] private float m_maxTilt = 5f; // Adjust the tilt angle as needed
+    [SerializeField] private float m_tiltSpeed = 2f; // Adjust the tilt speed as needed
     private Vector2 m_vel = new Vector2(0, 0);
     private List<GameObject> m_groundObjects = new List<GameObject>();
     private Animator m_animator;
@@ -51,7 +54,7 @@ public class Player : MonoBehaviour, IKnockBack
     {
         m_rigidBody = transform.GetComponent<Rigidbody2D>();
         m_animator = GetComponent<Animator>();
-
+        m_originalRotation = m_rigidBody.transform.rotation;
     }
 
     void Update()
@@ -233,7 +236,7 @@ public class Player : MonoBehaviour, IKnockBack
 
         m_vel.y = 0;
         m_vel.x *= GROUND_FRICTION;
-
+        HandleCharacterTilt();
         ApplyVelocity();
 
         if (m_groundObjects.Count == 0)
@@ -247,14 +250,32 @@ public class Player : MonoBehaviour, IKnockBack
         {
             m_stateTimer = 0;
             m_state = PlayerState.PS_JUMPING;
+            // Reset tilt to original rotation when jumping
+            m_rigidBody.transform.rotation = m_originalRotation;
             return;
         }
-
+       
         // Set Animator parameters
         m_animator.SetBool(AnimParamJump, false);
         m_animator.SetBool(AnimParamGrounded, m_groundObjects.Count > 0);
         m_animator.SetFloat(AnimParamIdleSpeed, Mathf.Lerp(1, m_maxIdleSpeed, MOVE_ACCEL));
     }
+
+    private void HandleCharacterTilt()
+    {
+        if (m_state == PlayerState.PS_IDLE)
+        {
+            // Reset to original rotation when idle
+            m_rigidBody.transform.rotation = Quaternion.Lerp(m_rigidBody.transform.rotation, m_originalRotation, m_tiltSpeed * Time.deltaTime);
+        }
+        else
+        {
+            // Tilt based on movement when walking
+            Quaternion runningTilt = m_groundObjects.Count > 0 ? Quaternion.Euler(0, 0, m_maxTilt * m_vel.x) : Quaternion.identity;
+            m_rigidBody.transform.up = Vector3.RotateTowards(m_rigidBody.transform.up, runningTilt * Vector2.up, m_tiltSpeed * Time.deltaTime, 0f);
+        }
+    }
+
 
     public void Knockback(Vector2 direction, float force)
     {
