@@ -22,6 +22,15 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    void Update()
+    {
+        // Check for "Escape" key press
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            ExitFullScreen();
+        }
+    }
+
     public void ReloadSceneWithDelay()
     {
         StartCoroutine(ReloadSceneCoroutine());
@@ -33,5 +42,15 @@ public class GameManager : MonoBehaviour
 
         Scene currentScene = SceneManager.GetActiveScene();
         SceneManager.LoadScene(currentScene.name);
+    }
+
+    void ExitFullScreen()
+    {
+        // Check if the game is running in full screen
+        if (Screen.fullScreen)
+        {
+            // Toggle full screen mode off
+            Screen.fullScreen = false;
+        }
     }
 }
