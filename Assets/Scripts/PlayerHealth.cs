@@ -57,4 +57,14 @@ public class PlayerHealth : MonoBehaviour
             Instantiate(DEATHPARTICLE_PREFAB, transform.position, Quaternion.identity);
         }
     }
+
+    public float GetCurrentHealth()
+    {
+        return CURRENT_HEALTH;
+    }
+
+    public float GetMaxHealth()
+    {
+        return MAX_HEALTH;
+    }
 }
