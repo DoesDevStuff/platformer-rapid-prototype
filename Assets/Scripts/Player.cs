@@ -207,6 +207,7 @@ public class Player : MonoBehaviour, IKnockBack
         {
             m_state = PlayerState.PS_FALLING;
             PlayParticles(m_landParticles);
+            m_isBouncing = false;
         }
 
         if (m_wantsLeft)
@@ -242,6 +243,7 @@ public class Player : MonoBehaviour, IKnockBack
         {
             m_state = PlayerState.PS_IDLE;
             m_vel.x = 0;
+            m_isBouncing = false;
         }
 
         m_vel.y = 0;
@@ -254,6 +256,7 @@ public class Player : MonoBehaviour, IKnockBack
         {
             //No longer on the ground, fall.
             m_state = PlayerState.PS_FALLING;
+            m_isBouncing = false;
             return;
         }
 
@@ -263,6 +266,7 @@ public class Player : MonoBehaviour, IKnockBack
             m_state = PlayerState.PS_JUMPING;
             // Reset tilt to original rotation when jumping
             m_rigidBody.transform.rotation = m_originalRotation;
+            m_isBouncing = false;
             return;
         }
        
