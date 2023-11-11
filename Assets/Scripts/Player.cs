@@ -15,11 +15,13 @@ public class Player : MonoBehaviour, IKnockBack
     public float AIR_FALL_FRICTION = 0.98f;
     public float AIR_MOVE_FRICTION = 0.82f;
 
+    private bool m_isBouncing = false;
     private bool m_facingRight = true;
     private bool m_jumpPressed = false;
     private bool m_jumpHeld = false;
     private bool m_wantsRight = false;
     private bool m_wantsLeft = false;
+
     private float m_stateTimer = 0.0f;
     private float m_coyoteTimeCounter = 0.0f;
     private float m_coyoteTime = 0.2f;
@@ -28,18 +30,21 @@ public class Player : MonoBehaviour, IKnockBack
     private float m_maxIdleSpeed = 1.25f;
     private float m_maxTilt = 10.0f;
     private float m_tiltSpeed = 20.0f;
+
     private RipplePostProcessor m_screenRipple;
     private Quaternion m_originalRotation;
     private Rigidbody2D m_rigidBody = null;
     private Vector2 m_vel = new Vector2(0, 0);
     private List<GameObject> m_groundObjects = new List<GameObject>();
     private Animator m_animator;
+
     private static readonly int AnimParamJump = Animator.StringToHash("Jump");
     private static readonly int AnimParamGrounded = Animator.StringToHash("Grounded");
     private static readonly int AnimParamIdleSpeed = Animator.StringToHash("IdleSpeed");
     
     [SerializeField] private ParticleSystem m_bounceParticles;
-    
+    [SerializeField] private ParticleSystem m_landParticles;
+
     private enum PlayerState
     {
         PS_IDLE = 0,
@@ -165,6 +170,7 @@ public class Player : MonoBehaviour, IKnockBack
         // since gravity is now positive we must subtract
         m_vel.y -= (GRAVITY * FALL_GRAVITY_MULTIPLIER) * Time.fixedDeltaTime;
         m_vel.y *= AIR_FALL_FRICTION;
+
         if (m_wantsLeft)
         {
             m_vel.x -= MOVE_ACCEL * Time.fixedDeltaTime;
@@ -175,7 +181,8 @@ public class Player : MonoBehaviour, IKnockBack
         }
 
         m_vel.x *= AIR_MOVE_FRICTION;
-        
+
+
         // Set Animator parameters
         m_animator.SetBool(AnimParamJump, false);
         m_animator.SetBool(AnimParamGrounded, m_groundObjects.Count > 0);
@@ -199,6 +206,7 @@ public class Player : MonoBehaviour, IKnockBack
         if (m_vel.y <= 0)
         {
             m_state = PlayerState.PS_FALLING;
+            PlayParticles(m_landParticles);
         }
 
         if (m_wantsLeft)
@@ -282,11 +290,15 @@ public class Player : MonoBehaviour, IKnockBack
         }
     }
 
-
     public void Knockback(Vector2 direction, float force)
     {
         m_vel = direction.normalized * force;
         m_state = PlayerState.PS_FALLING; // Change to the appropriate state
+    }
+
+    public bool IsBouncing()
+    {
+        return m_isBouncing;
     }
 
     public void BounceUp(float bounceForce)
@@ -301,6 +313,10 @@ public class Player : MonoBehaviour, IKnockBack
         m_screenRipple.RippleEffect();
         m_vel.y = bounceForce;
         m_state = PlayerState.PS_JUMPING;
+
+        m_isBouncing = true;
+
+
         PlayParticles(m_bounceParticles);
         Debug.Log("Bounce force: " + bounceForce);
     }
@@ -397,6 +413,7 @@ public class Player : MonoBehaviour, IKnockBack
                 {
                     m_vel.y = 0;
                     m_state = PlayerState.PS_FALLING;
+                    PlayParticles(m_landParticles);
                 }
             }
             else
@@ -414,5 +431,15 @@ public class Player : MonoBehaviour, IKnockBack
     {
         yield return new WaitForSeconds(duration);
         particles.Stop();
+    }
+    
+    public bool IsMovingLeft()
+    {
+        return m_vel.x < 0;
+    }
+
+    public bool IsMovingRight()
+    {
+        return m_vel.x > 0;
     }
 }
