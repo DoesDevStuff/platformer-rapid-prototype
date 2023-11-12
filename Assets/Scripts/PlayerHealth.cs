@@ -36,6 +36,63 @@ public class PlayerHealth : MonoBehaviour
             Instantiate(BLOOD_PREFABS[Random.Range(0, BLOOD_PREFABS.Length)], transform.position, Quaternion.identity);
             Die();
         }
+        else
+        {
+            Collider2D playerCollider = GetComponent<Collider2D>();
+            if (playerCollider != null)
+            {
+                // Instantiate blood on knockback
+                GameObject bloodInstance = Instantiate(BLOOD_PREFABS[Random.Range(0, BLOOD_PREFABS.Length)], transform.position, Quaternion.identity);
+
+                // Randomize the scale between 0.4 and 0.8 for both X and Y axes
+                float randomScale = Random.Range(0.4f, 0.55f);
+                bloodInstance.transform.localScale = new Vector3(randomScale, randomScale, 1f);
+
+                // Set the parent to player position
+                bloodInstance.transform.parent = transform;
+
+                // Get the bounds of the player's collider
+                Bounds playerBounds = playerCollider.bounds;
+
+                // Clamp the blood instance position within the player's bounds
+                Vector3 clampedPosition = new Vector3(
+                    Mathf.Clamp(bloodInstance.transform.position.x, playerBounds.min.x, playerBounds.max.x),
+                    Mathf.Clamp(bloodInstance.transform.position.y, playerBounds.min.y, playerBounds.max.y),
+                    bloodInstance.transform.position.z
+                );
+
+                // Update the blood instance position
+                bloodInstance.transform.position = clampedPosition;
+                StartCoroutine(FadeBloodInstance(bloodInstance, 11f));
+            }
+        }
+    }
+
+    // Coroutine to fade the blood instance over time
+    private IEnumerator FadeBloodInstance(GameObject bloodInstance, float fadeDuration)
+    {
+        SpriteRenderer bloodRenderer = bloodInstance.GetComponent<SpriteRenderer>();
+
+        if (bloodRenderer != null)
+        {
+            float elapsedTime = 0f;
+            Color initialColor = bloodRenderer.color;
+
+            while (elapsedTime < fadeDuration)
+            {
+                float alpha = Mathf.Lerp(1f, 0f, elapsedTime / fadeDuration);
+                bloodRenderer.color = new Color(initialColor.r, initialColor.g, initialColor.b, alpha);
+
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+
+            // Ensure the blood is fully faded
+            bloodRenderer.color = new Color(initialColor.r, initialColor.g, initialColor.b, 0f);
+
+            // Destroy the blood instance after fading
+            Destroy(bloodInstance);
+        }
     }
 
     void Die()
