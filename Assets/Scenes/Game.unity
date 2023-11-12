@@ -1279,6 +1279,7 @@ MonoBehaviour:
   - {fileID: 3592938953909773573, guid: d093b6620cd7181418ff26c59f73d97e, type: 3}
   - {fileID: 5635129516217797153, guid: 5f666a9fcdf68264d8238e8fe752b1cd, type: 3}
   - {fileID: 7701406942210828117, guid: dbb5191ac3a869e46a90745b52c2b7a2, type: 3}
+  - {fileID: 9113188180768450246, guid: 6466ebf3ca76c0249a3d189aa13f6b1a, type: 3}
   DEATHPARTICLE_PREFAB: {fileID: 4932676174169366325, guid: 9b39c75b1391f874f95c99ff7fa1beea,
     type: 3}
   m_playerShakeProfile: {fileID: 11400000, guid: f4d2fd799342ae74381f56acbb820b83,
